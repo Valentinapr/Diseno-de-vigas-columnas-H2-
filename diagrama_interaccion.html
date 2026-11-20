@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagrama de interacción P–M · columna de concreto reforzado</title>
+<style>
+  :root{
+    --blue:#1f4e79; --orange:#e8710a; --red:#c62828; --green:#2e7d32;
+    --gray:#666; --lgray:#f2f2f2; --line:#d9d9d9; --bg:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family:system-ui,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    margin:0; color:#222; background:#eef1f5; font-size:14px; line-height:1.45;
+  }
+  header{
+    background:var(--blue); color:#fff; padding:18px 22px 14px; border-bottom:4px solid var(--orange);
+  }
+  header h1{margin:0 0 3px; font-size:20px;}
+  header p{margin:0; font-size:12.5px; opacity:.9;}
+  .wrap{max-width:1200px; margin:0 auto; padding:16px; display:grid; grid-template-columns:420px 1fr; gap:16px;}
+  @media (max-width:950px){ .wrap{grid-template-columns:1fr;} }
+  .card{background:#fff; border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin-bottom:14px;}
+  .card h2{margin:0 0 10px; font-size:14.5px; color:var(--blue); border-bottom:2px solid var(--lgray); padding-bottom:6px;}
+  .card h3{margin:14px 0 6px; font-size:12.5px; color:#444; text-transform:uppercase; letter-spacing:.03em;}
+  label{display:block; font-size:12px; color:#444; margin-bottom:2px;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:8px 12px;}
+  .grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px;}
+  input[type=number],input[type=text],select{
+    width:100%; padding:6px 7px; border:1px solid var(--line); border-radius:6px; font-size:13px; font-family:inherit;
+  }
+  input:focus,select:focus{outline:2px solid #bcd3ec; border-color:var(--blue);}
+  table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  th,td{border:1px solid var(--line); padding:4px 5px; text-align:center;}
+  th{background:var(--blue); color:#fff; font-weight:600; font-size:11.5px;}
+  td input{border:none; width:100%; text-align:center; padding:4px 2px;}
+  td input:focus{outline:1px solid #bcd3ec;}
+  .btn{
+    cursor:pointer; border:none; border-radius:6px; padding:6px 11px; font-size:12.5px; font-weight:600;
+    background:var(--blue); color:#fff; margin:6px 6px 0 0;
+  }
+  .btn.sec{background:#eef1f5; color:#333; border:1px solid var(--line);}
+  .btn.del{background:#fff; color:var(--red); border:1px solid #e3b4b4; padding:3px 8px; font-size:11px;}
+  .btn:hover{opacity:.9;}
+  .radio-row{display:flex; gap:16px; margin-bottom:10px; font-size:12.5px;}
+  .radio-row label{display:flex; align-items:center; gap:5px; margin:0; cursor:pointer;}
+  .hidden{display:none;}
+  .hint{font-size:11.5px; color:var(--gray); margin:4px 0 0;}
+  canvas{width:100%; height:auto; display:block;}
+  .legend{display:flex; flex-wrap:wrap; gap:14px; font-size:12px; margin:8px 2px 0;}
+  .legend span{display:inline-flex; align-items:center; gap:5px;}
+  .sw{width:22px; height:3px; display:inline-block; border-radius:2px;}
+  .sw.dash{height:0; border-top:3px dashed var(--blue);}
+  .sw.dot{width:11px; height:11px; border-radius:50%;}
+  .out{font-size:12.5px;}
+  .out b{color:var(--blue);}
+  .pill{display:inline-block; padding:1px 7px; border-radius:10px; font-size:11px; font-weight:700;}
+  .ok{background:#e3f1e4; color:var(--green);}
+  .no{background:#fbe3e3; color:var(--red);}
+  .tag{font-size:11px; color:var(--gray);}
+  footer{max-width:1200px; margin:0 auto; padding:4px 16px 26px; font-size:11.5px; color:var(--gray);}
+  .err{color:var(--red); font-size:12px; margin-top:6px;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Diagrama de interacción P–M</h1>
+  <p>Columna rectangular de concreto reforzado · flexión uniaxial · ACI 318 / NSR-10 C.21 · bloque rectangular de Whitney</p>
+</header>
+
+<div class="wrap">
+  <!-- ======================= COLUMNA IZQUIERDA: ENTRADAS ======================= -->
+  <div>
+    <div class="card">
+      <h2>1 · Materiales</h2>
+      <div class="grid3">
+        <div><label>f'c (MPa)</label><input type="number" id="fc" value="28" step="1"></div>
+        <div><label>fy (MPa)</label><input type="number" id="fy" value="420" step="10"></div>
+        <div><label>Es (MPa)</label><input type="number" id="Es" value="200000" step="1000"></div>
+      </div>
+      <p class="hint">β₁ se calcula solo según f'c (0.85 hasta 28 MPa, baja 0.05 por cada 7 MPa, mínimo 0.65). εcu = 0.003.</p>
+    </div>
+
+    <div class="card">
+      <h2>2 · Sección</h2>
+      <div class="grid3">
+        <div><label>b — ancho (mm)</label><input type="number" id="b" value="350" step="5"></div>
+        <div><label>h — alto (mm)</label><input type="number" id="h" value="350" step="5"></div>
+        <div><label>Tipo de estribo</label>
+          <select id="tie"><option value="tie">Estribos</option><option value="spiral">Espiral</option></select>
+        </div>
+      </div>
+      <p class="hint">El eje neutro avanza en la dirección de «h». El momento se calcula respecto al centro de la sección (h/2).</p>
+    </div>
+
+    <div class="card">
+      <h2>3 · Capas de acero</h2>
+      <div class="radio-row">
+        <label><input type="radio" name="mode" value="area" checked> Por área (mm²)</label>
+        <label><input type="radio" name="mode" value="bars"> Por número y diámetro de barras</label>
+      </div>
+      <p class="hint" style="margin-bottom:8px">La profundidad d<sub>i</sub> de cada capa se mide desde la fibra más comprimida (el borde superior), en mm.</p>
+
+      <!-- modo ÁREA -->
+      <div id="areaBox">
+        <table id="areaTbl">
+          <thead><tr><th>Capa</th><th>d<sub>i</sub> (mm)</th><th>A<sub>s</sub> (mm²)</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button class="btn sec" onclick="addArea()">+ capa</button>
+      </div>
+
+      <!-- modo BARRAS -->
+      <div id="barsBox" class="hidden">
+        <table id="barsTbl">
+          <thead><tr><th>Capa</th><th>d<sub>i</sub> (mm)</th><th>N.º barras</th><th>Barra</th><th>A<sub>s</sub></th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button class="btn sec" onclick="addBar()">+ capa</button>
+        <p class="hint">Áreas nominales: #3=71, #4=129, #5=199, #6=284, #7=387, #8=510, #9=645, #10=819 mm².</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>4 · Combinaciones de carga (demanda)</h2>
+      <p class="hint" style="margin-bottom:8px">Escribe cada combinación con su M<sub>u</sub> (kN·m) y su P<sub>u</sub> (kN, compresión positiva). Se dibujan como puntos y se compara su M<sub>u</sub> contra el φM<sub>n</sub> de la curva a ese mismo P<sub>u</sub>.</p>
+      <table id="comboTbl">
+        <thead><tr><th>Nombre</th><th>M<sub>u</sub></th><th>P<sub>u</sub></th><th>φM<sub>n</sub></th><th>D/C</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button class="btn sec" onclick="addCombo()">+ combinación</button>
+      <button class="btn sec" onclick="loadExample()">cargar ejemplo C4</button>
+    </div>
+  </div>
+
+  <!-- ======================= COLUMNA DERECHA: GRÁFICO Y RESULTADOS ======================= -->
+  <div>
+    <div class="card">
+      <h2>Diagrama</h2>
+      <canvas id="plot" width="760" height="640"></canvas>
+      <div class="legend">
+        <span><i class="sw dash"></i> Resistencia nominal (M<sub>n</sub>, P<sub>n</sub>)</span>
+        <span><i class="sw" style="background:var(--orange)"></i> Resistencia de diseño (φM<sub>n</sub>, φP<sub>n</sub>)</span>
+        <span><i class="sw dot" style="background:var(--green)"></i> Combinaciones (M<sub>u</sub>, P<sub>u</sub>)</span>
+      </div>
+      <div id="err" class="err"></div>
+    </div>
+
+    <div class="card">
+      <h2>Puntos característicos</h2>
+      <div id="keyout" class="out"></div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Herramienta de apoyo para el parcial. El cálculo (equilibrio por capas con el bloque rectangular de Whitney y los factores φ de 0.65 a 0.90) reproduce el procedimiento del ejercicio de clase.
+  Compresión positiva. Unidades: mm, MPa, kN, kN·m. Verifica siempre contra la norma y los apuntes del curso.
+</footer>
+
+<script>
+// ------------------------------------------------------------------ áreas nominales de barras
+const AREA = {"#3":71,"#4":129,"#5":199,"#6":284,"#7":387,"#8":510,"#9":645,"#10":819};
+
+// ------------------------------------------------------------------ utilidades de tablas
+function cell(v, cls){ return `<td><input type="${cls||'number'}" value="${v}" oninput="recalc()"></td>`; }
+
+function addArea(d, As){
+  const tb = document.querySelector('#areaTbl tbody');
+  const i = tb.rows.length + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${i}</td>${cell(d??'')}${cell(As??'')}<td><button class="btn del" onclick="delRow(this)">×</button></td>`;
+  tb.appendChild(tr); renum('areaTbl'); recalc();
+}
+function addBar(d, n, bar){
+  const tb = document.querySelector('#barsTbl tbody');
+  const i = tb.rows.length + 1;
+  const opts = Object.keys(AREA).map(k=>`<option ${k===bar?'selected':''}>${k}</option>`).join('');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${i}</td>${cell(d??'')}${cell(n??'')}`
+    + `<td><select onchange="recalc()">${opts}</select></td><td class="as">—</td>`
+    + `<td><button class="btn del" onclick="delRow(this)">×</button></td>`;
+  tb.appendChild(tr); renum('barsTbl'); recalc();
+}
+function addCombo(name, Mu, Pu){
+  const tb = document.querySelector('#comboTbl tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `${cell(name??'','text')}${cell(Mu??'')}${cell(Pu??'')}`
+    + `<td class="phimn">—</td><td class="dc">—</td>`
+    + `<td><button class="btn del" onclick="delRow(this)">×</button></td>`;
+  tb.appendChild(tr); recalc();
+}
+function delRow(btn){ const tr=btn.closest('tr'); const tbl=tr.closest('table').id; tr.remove(); if(tbl!=='comboTbl') renum(tbl); recalc(); }
+function renum(id){ document.querySelectorAll(`#${id} tbody tr`).forEach((tr,i)=>tr.cells[0].textContent=i+1); }
+
+// ------------------------------------------------------------------ lectura de datos
+function num(id){ return parseFloat(document.getElementById(id).value); }
+
+function getLayers(){
+  const mode = document.querySelector('input[name=mode]:checked').value;
+  const L = [];
+  if(mode==='area'){
+    document.querySelectorAll('#areaTbl tbody tr').forEach(tr=>{
+      const d = parseFloat(tr.cells[1].querySelector('input').value);
+      const As = parseFloat(tr.cells[2].querySelector('input').value);
+      if(isFinite(d) && isFinite(As) && As>0) L.push({As, di:d});
+    });
+  } else {
+    document.querySelectorAll('#barsTbl tbody tr').forEach(tr=>{
+      const d = parseFloat(tr.cells[1].querySelector('input').value);
+      const n = parseFloat(tr.cells[2].querySelector('input').value);
+      const bar = tr.cells[3].querySelector('select').value;
+      const As = (n||0)*AREA[bar];
+      tr.cells[4].textContent = isFinite(As)&&As>0 ? As+' mm²' : '—';
+      if(isFinite(d) && As>0) L.push({As, di:d});
+    });
+  }
+  return L;
+}
+
+// ------------------------------------------------------------------ cálculo (igual que calc.py: section_state, phi_of)
+function beta1(fc){ if(fc<=28) return 0.85; return Math.max(0.65, 0.85 - 0.05*(fc-28)/7); }
+
+function sectionState(c, P){
+  // P = parámetros {fc,fy,Es,ecu,b,h,b1,layers}
+  const {fc,fy,Es,ecu,b,h,b1,layers} = P;
+  const a = Math.min(b1*c, h);
+  const Cc = 0.85*fc*b*a/1e3;                 // kN
+  let Mc = Cc*(h/2 - a/2)/1e3;                 // kN·m
+  let Pn = Cc, Mn = Mc, etMax = 0;
+  for(const {As,di} of layers){
+    const eps = ecu*(c-di)/c;
+    const fs = Math.max(-fy, Math.min(fy, Es*eps));
+    let F = As*fs/1e3;
+    if(di < a) F -= 0.85*fc*As/1e3;            // descuenta concreto desplazado si la capa está comprimida
+    const arm = (h/2 - di);
+    Pn += F; Mn += F*arm/1e3;
+    etMax = Math.max(etMax, -eps);
+  }
+  return {Pn, Mn, et:etMax};
+}
+
+function phiOf(et, spiral){
+  const lo = spiral?0.75:0.65;
+  if(et<=0.002) return lo;
+  if(et>=0.005) return 0.90;
+  return lo + (et-0.002)*((0.90-lo)/0.003);
+}
+
+function buildCurve(P){
+  // recorre c de grande (compresión casi pura) a pequeño (cerca de tracción)
+  const cs = [];
+  for(let i=0;i<50;i++) cs.push(5000 - i*(5000-500)/49);
+  for(let i=0;i<450;i++) cs.push(500 - i*(500-8)/449);
+  const nom=[], des=[];
+  for(const c of cs){
+    const {Pn,Mn,et} = sectionState(c,P);
+    const ph = phiOf(et, P.spiral);
+    nom.push({M:Mn, P:Pn});
+    des.push({M:ph*Mn, P:ph*Pn, phi:ph});
+  }
+  const Ast = P.layers.reduce((s,l)=>s+l.As,0);
+  const Ag = P.b*P.h;
+  const P0 = (0.85*P.fc*(Ag-Ast) + P.fy*Ast)/1e3;
+  const alpha = P.spiral?0.85:0.80;
+  const phi0 = P.spiral?0.75:0.65;
+  const PnMax = alpha*P0;
+  const phiPnMax = phi0*alpha*P0;
+  const Pt = -P.fy*Ast/1e3;
+  return {nom, des, P0, PnMax, phiPnMax, Pt, Ast, Ag};
+}
+
+// capa el tope de carga axial (meseta) en las curvas
+function capAxial(curve, PnMax, phiPnMax){
+  return {
+    nom: curve.nom.map(p=>({M:p.M, P:Math.min(p.P, PnMax)})),
+    des: curve.des.map(p=>({M:p.M, P:Math.min(p.P, phiPnMax)})),
+  };
+}
+
+// interpola φMn para un Pu dado sobre la curva de diseño (toma la rama de mayor momento)
+function phiMnAtP(desCapped, Pu){
+  let best = null, bestM = -1;
+  for(let i=0;i<desCapped.length-1;i++){
+    const a=desCapped[i], b=desCapped[i+1];
+    if((a.P-Pu)*(b.P-Pu)<=0 && a.P!==b.P){
+      const t=(Pu-a.P)/(b.P-a.P);
+      const M=a.M+t*(b.M-a.M);
+      if(M>bestM){bestM=M; best=M;}
+    }
+  }
+  return best;
+}
+
+// ------------------------------------------------------------------ recálculo y dibujo
+let LAST = null;
+function recalc(){
+  const err = document.getElementById('err'); err.textContent='';
+  const layers = getLayers();
+  const fc=num('fc'), fy=num('fy'), Es=num('Es'), b=num('b'), h=num('h');
+  const spiral = document.getElementById('tie').value==='spiral';
+  if(![fc,fy,Es,b,h].every(isFinite) || b<=0 || h<=0 || fc<=0 || fy<=0){
+    err.textContent='Revisa los materiales y las dimensiones de la sección.'; return;
+  }
+  if(layers.length===0){ err.textContent='Agrega al menos una capa de acero.'; }
+  const P = {fc,fy,Es,ecu:0.003,b,h,b1:beta1(fc),layers,spiral};
+  const curve = buildCurve(P);
+  const capped = capAxial(curve, curve.PnMax, curve.phiPnMax);
+  LAST = {P, curve, capped};
+
+  // combinaciones: φMn y D/C
+  document.querySelectorAll('#comboTbl tbody tr').forEach(tr=>{
+    const Mu=parseFloat(tr.cells[1].querySelector('input').value);
+    const Pu=parseFloat(tr.cells[2].querySelector('input').value);
+    const cphi=tr.cells[3], cdc=tr.cells[4];
+    if(isFinite(Mu)&&isFinite(Pu)){
+      const phiMn = phiMnAtP(capped.des, Pu);
+      if(phiMn && phiMn>0){
+        cphi.textContent = phiMn.toFixed(0);
+        const dc = Math.abs(Mu)/phiMn;
+        cdc.innerHTML = `<span class="pill ${dc<=1?'ok':'no'}">${dc.toFixed(2)}</span>`;
+      } else { cphi.textContent='fuera'; cdc.innerHTML='<span class="pill no">—</span>'; }
+    } else { cphi.textContent='—'; cdc.textContent='—'; }
+  });
+
+  drawKey(curve, P);
+  draw(capped, curve, P);
+}
+
+function drawKey(curve, P){
+  const Ag=curve.Ag, umbral=0.10*P.fc*Ag/1e3;
+  document.getElementById('keyout').innerHTML =
+    `<b>Compresión pura</b> P₀ = ${curve.P0.toFixed(0)} kN &nbsp;·&nbsp; `+
+    `<b>Tope de diseño</b> φP<sub>n,máx</sub> = ${curve.phiPnMax.toFixed(0)} kN `+
+    `(${P.spiral?'0.85·0.75':'0.80·0.65'}·P₀) &nbsp;·&nbsp; `+
+    `<b>Tracción pura</b> = ${curve.Pt.toFixed(0)} kN<br>`+
+    `Acero total A<sub>st</sub> = ${curve.Ast.toFixed(0)} mm² &nbsp;·&nbsp; `+
+    `cuantía ρ = ${(100*curve.Ast/Ag).toFixed(2)} % &nbsp;·&nbsp; `+
+    `A<sub>g</sub>·f'c/10 = ${umbral.toFixed(0)} kN (umbral de columna fuerte–viga débil)`;
+}
+
+// ------------------------------------------------------------------ canvas
+function draw(capped, curve, P){
+  const cv=document.getElementById('plot'), ctx=cv.getContext('2d');
+  const W=cv.width, H=cv.height;
+  ctx.clearRect(0,0,W,H);
+  const mL=70, mR=20, mT=24, mB=56;
+  const px=x=>mL+(x-xmin)/(xmax-xmin)*(W-mL-mR);
+  const py=y=>H-mB-(y-ymin)/(ymax-ymin)*(H-mT-mB);
+
+  // rangos
+  const combos=[];
+  document.querySelectorAll('#comboTbl tbody tr').forEach(tr=>{
+    const Mu=parseFloat(tr.cells[1].querySelector('input').value);
+    const Pu=parseFloat(tr.cells[2].querySelector('input').value);
+    const nm=tr.cells[0].querySelector('input').value;
+    if(isFinite(Mu)&&isFinite(Pu)) combos.push({nm,Mu:Math.abs(Mu),Pu});
+  });
+  let allM=[0], allP=[curve.Pt, curve.PnMax];
+  capped.nom.forEach(p=>{allM.push(p.M);allP.push(p.P);});
+  combos.forEach(c=>{allM.push(c.Mu);allP.push(c.Pu);});
+  var xmax=Math.max(...allM)*1.12, xmin=0;
+  var ymax=Math.max(...allP)*1.08, ymin=Math.min(...allP, 0)*1.12;
+  if(!isFinite(xmax)||xmax<=0) xmax=100;
+  if(!isFinite(ymax)) ymax=100;
+
+  // grilla y ejes
+  ctx.strokeStyle='#eee'; ctx.fillStyle='#666'; ctx.font='11px system-ui'; ctx.lineWidth=1;
+  const nx=6, ny=8;
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  for(let i=0;i<=nx;i++){ const v=xmin+(xmax-xmin)*i/nx, X=px(v);
+    ctx.beginPath();ctx.moveTo(X,mT);ctx.lineTo(X,H-mB);ctx.stroke();
+    ctx.fillText(v.toFixed(0), X, H-mB+6); }
+  ctx.textAlign='right'; ctx.textBaseline='middle';
+  for(let i=0;i<=ny;i++){ const v=ymin+(ymax-ymin)*i/ny, Y=py(v);
+    ctx.beginPath();ctx.moveTo(mL,Y);ctx.lineTo(W-mR,Y);ctx.stroke();
+    ctx.fillText(v.toFixed(0), mL-6, Y); }
+
+  // eje P=0
+  ctx.strokeStyle='#999'; ctx.lineWidth=1.3; ctx.beginPath();ctx.moveTo(mL,py(0));ctx.lineTo(W-mR,py(0));ctx.stroke();
+
+  // títulos de ejes
+  ctx.fillStyle='#333'; ctx.font='12px system-ui';
+  ctx.textAlign='center'; ctx.textBaseline='top';
+  ctx.fillText('Momento M (kN·m)', (mL+W-mR)/2, H-24);
+  ctx.save(); ctx.translate(16,(mT+H-mB)/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText('Carga axial P (kN)  ·  compresión +', 0, 0); ctx.restore();
+
+  function poly(pts, color, w, dash){
+    ctx.strokeStyle=color; ctx.lineWidth=w; ctx.setLineDash(dash||[]);
+    ctx.beginPath();
+    let started=false;
+    pts.forEach(p=>{ const X=px(p.M),Y=py(p.P);
+      if(!started){ctx.moveTo(X,Y);started=true;} else ctx.lineTo(X,Y); });
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  // curva nominal (discontinua azul) y de diseño (naranja)
+  poly(capped.nom.concat([{M:0,P:curve.Pt}]), '#1f4e79', 2, [7,5]);
+  poly(capped.des.concat([{M:0,P:phiLastPt(curve)}]), '#e8710a', 2.6);
+
+  // puntos de combinaciones
+  ctx.font='11px system-ui';
+  combos.forEach(c=>{
+    const X=px(c.Mu), Y=py(c.Pu);
+    ctx.fillStyle='#2e7d32'; ctx.beginPath(); ctx.arc(X,Y,5,0,7); ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=1.3; ctx.stroke();
+    if(c.nm){ ctx.fillStyle='#1b5e20'; ctx.textAlign='left'; ctx.textBaseline='bottom';
+      ctx.fillText(c.nm, X+7, Y-3); }
+  });
+}
+function phiLastPt(curve){ return curve.Pt*0.90; } // tracción pura con φ=0.90
+
+// ------------------------------------------------------------------ eventos e inicio
+document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',()=>{
+  const area=document.querySelector('input[name=mode]:checked').value==='area';
+  document.getElementById('areaBox').classList.toggle('hidden',!area);
+  document.getElementById('barsBox').classList.toggle('hidden',area);
+  recalc();
+}));
+['fc','fy','Es','b','h','tie'].forEach(id=>document.getElementById(id).addEventListener('input',recalc));
+
+function loadExample(){
+  // columna C4 del ejercicio: 350x350, 8#7 en 3 capas, 6 combinaciones
+  document.getElementById('fc').value=28; document.getElementById('fy').value=420;
+  document.getElementById('b').value=350; document.getElementById('h').value=350;
+  document.querySelector('#areaTbl tbody').innerHTML='';
+  addArea(65,1161); addArea(175,774); addArea(285,1161);
+  document.querySelector('#comboTbl tbody').innerHTML='';
+  addCombo('1.4D',70,206); addCombo('1.2D+1.6L',86,228); addCombo('1.2D+L+E/R',140,239);
+  addCombo('1.2D+L-E/R',13,178); addCombo('0.9D+E/R',109,163); addCombo('0.9D-E/R',19,102);
+  document.querySelector('input[name=mode][value=area]').checked=true;
+  document.getElementById('areaBox').classList.remove('hidden');
+  document.getElementById('barsBox').classList.add('hidden');
+  recalc();
+}
+
+// arranque: ejemplo cargado para que se vea algo al abrir
+loadExample();
+addBar(65,3,'#7'); addBar(175,2,'#7'); addBar(285,3,'#7'); // deja listo el modo barras equivalente
+</script>
+</body>
+</html>
